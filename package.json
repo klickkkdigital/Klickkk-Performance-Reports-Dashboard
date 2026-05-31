@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/kill-port-3000.mjs && next dev -p 3000",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/kill-port-3000.mjs && next start -p 3000",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",

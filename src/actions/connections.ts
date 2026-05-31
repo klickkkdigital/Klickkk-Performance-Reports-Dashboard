@@ -5,12 +5,23 @@ import { db } from '@/lib/db'
 import { encrypt } from '@/lib/crypto'
 import { requireAdmin } from '@/lib/auth'
 
-// Shopify — manual token input (simpler than OAuth for admin-managed connections)
+function normalizeShopifyDomain(websiteUrl: string) {
+  const value = websiteUrl.trim()
+  const url = value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`
+
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, '')
+  } catch {
+    return value.toLowerCase().replace(/^www\./, '')
+  }
+}
+
+// Shopify — manual app credential input for admin-managed connections
 const shopifySchema = z.object({
   clientId: z.string(),
-  storeDomain: z.string().regex(/^[a-z0-9-]+\.myshopify\.com$/),
-  accessToken: z.string().min(10),
-  accountName: z.string().min(1),
+  websiteUrl: z.string().min(1, 'Website URL is required').transform(normalizeShopifyDomain),
+  shopifyClientId: z.string().min(1, 'Client ID is required'),
+  shopifySecretKey: z.string().min(1, 'Secret key is required'),
 })
 
 export async function addShopifyConnection(_prev: unknown, formData: FormData) {
@@ -19,13 +30,31 @@ export async function addShopifyConnection(_prev: unknown, formData: FormData) {
   const parsed = shopifySchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { clientId, storeDomain, accessToken, accountName } = parsed.data
-  const encryptedToken = await encrypt(accessToken)
+  const { clientId, websiteUrl, shopifyClientId, shopifySecretKey } = parsed.data
+  const [encryptedSecretKey, encryptedClientId] = await Promise.all([
+    encrypt(shopifySecretKey),
+    encrypt(shopifyClientId),
+  ])
 
   await db.dataConnection.upsert({
-    where: { clientId_platform_accountId: { clientId, platform: 'SHOPIFY', accountId: storeDomain } },
-    create: { clientId, platform: 'SHOPIFY', accountId: storeDomain, accountName, accessToken: encryptedToken, isActive: true },
-    update: { accessToken: encryptedToken, accountName, isActive: true },
+    where: { clientId_platform_accountId: { clientId, platform: 'SHOPIFY', accountId: websiteUrl } },
+    create: {
+      clientId,
+      platform: 'SHOPIFY',
+      accountId: websiteUrl,
+      accountName: websiteUrl,
+      accessToken: encryptedSecretKey,
+      refreshToken: encryptedClientId,
+      scopes: ['shopify_app_credentials'],
+      isActive: true,
+    },
+    update: {
+      accountName: websiteUrl,
+      accessToken: encryptedSecretKey,
+      refreshToken: encryptedClientId,
+      scopes: ['shopify_app_credentials'],
+      isActive: true,
+    },
   })
 
   revalidatePath(`/admin/connections`)
