@@ -1,0 +1,164 @@
+import { requireSession } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+import KpiCard from '@/components/ui/KpiCard'
+import SectionHeader from '@/components/ui/SectionHeader'
+import { Eye, MousePointer2, ShoppingCart, DollarSign } from 'lucide-react'
+
+export default async function MetaPage() {
+  const session = await requireSession()
+  const clientId = session.clientId!
+
+  const now = new Date()
+  const monthStart = startOfMonth(now)
+  const monthEnd = endOfMonth(now)
+
+  // Aggregate by campaign type
+  const byType = await db.$queryRaw<
+    Array<{
+      type: string
+      spend: number
+      impressions: number
+      reach: number
+      clicks: number
+      purchases: number
+      purchase_value: number
+      add_to_cart: number
+      cpm: number
+      cpc: number
+      ctr: number
+      roas: number
+      cpa: number
+    }>
+  >`
+    SELECT
+      c.type,
+      COALESCE(SUM(m.spend), 0)::float AS spend,
+      COALESCE(SUM(m.impressions), 0)::bigint AS impressions,
+      COALESCE(SUM(m.reach), 0)::bigint AS reach,
+      COALESCE(SUM(m.clicks), 0)::bigint AS clicks,
+      COALESCE(SUM(m.purchases), 0)::bigint AS purchases,
+      COALESCE(SUM(m."purchaseValue"), 0)::float AS purchase_value,
+      COALESCE(SUM(m."addToCart"), 0)::bigint AS add_to_cart,
+      CASE WHEN SUM(m.impressions) > 0 THEN (SUM(m.spend)/SUM(m.impressions)*1000) ELSE 0 END::float AS cpm,
+      CASE WHEN SUM(m.clicks) > 0 THEN SUM(m.spend)/SUM(m.clicks) ELSE 0 END::float AS cpc,
+      CASE WHEN SUM(m.impressions) > 0 THEN (SUM(m.clicks)::float/SUM(m.impressions)*100) ELSE 0 END::float AS ctr,
+      CASE WHEN SUM(m.spend) > 0 THEN SUM(m."purchaseValue")/SUM(m.spend) ELSE 0 END::float AS roas,
+      CASE WHEN SUM(m.purchases) > 0 THEN SUM(m.spend)/SUM(m.purchases) ELSE 0 END::float AS cpa
+    FROM "Campaign" c
+    LEFT JOIN "CampaignMetric" m ON m."campaignId" = c.id
+      AND m.date >= ${monthStart} AND m.date <= ${monthEnd}
+    WHERE c."clientId" = ${clientId}
+    GROUP BY c.type
+    ORDER BY c.type
+  `
+
+  // All campaigns list
+  const campaigns = await db.campaign.findMany({
+    where: { clientId },
+    include: {
+      metrics: {
+        where: { date: { gte: monthStart, lte: monthEnd } },
+      },
+    },
+    orderBy: { name: 'asc' },
+  })
+
+  const typeColors: Record<string, string> = {
+    AWARENESS: 'bg-violet-100 text-violet-700',
+    TRAFFIC: 'bg-blue-100 text-blue-700',
+    SALES: 'bg-emerald-100 text-emerald-700',
+  }
+
+  return (
+    <div>
+      <SectionHeader title={`Meta Ads — ${format(now, 'MMMM yyyy')}`} description="Awareness, Traffic & Sales campaigns" />
+
+      {/* Sections per campaign type */}
+      {['AWARENESS', 'TRAFFIC', 'SALES'].map((type) => {
+        const d = byType.find((b) => b.type === type)
+        if (!d) return null
+
+        return (
+          <div key={type} className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeColors[type]}`}>
+                {type}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <KpiCard label="Spend" value={`$${Number(d.spend).toLocaleString(undefined, { maximumFractionDigits: 0 })}`} icon={DollarSign} iconBg="bg-rose-50" />
+              {type === 'AWARENESS' && (
+                <>
+                  <KpiCard label="Impressions" value={Number(d.impressions).toLocaleString()} icon={Eye} iconBg="bg-violet-50" />
+                  <KpiCard label="Reach" value={Number(d.reach).toLocaleString()} icon={Eye} iconBg="bg-indigo-50" />
+                  <KpiCard label="CPM" value={`$${Number(d.cpm).toFixed(2)}`} icon={DollarSign} iconBg="bg-gray-50" />
+                </>
+              )}
+              {type === 'TRAFFIC' && (
+                <>
+                  <KpiCard label="Clicks" value={Number(d.clicks).toLocaleString()} icon={MousePointer2} iconBg="bg-blue-50" />
+                  <KpiCard label="CTR" value={`${Number(d.ctr).toFixed(2)}%`} icon={MousePointer2} iconBg="bg-sky-50" />
+                  <KpiCard label="CPC" value={`$${Number(d.cpc).toFixed(2)}`} icon={DollarSign} iconBg="bg-gray-50" />
+                </>
+              )}
+              {type === 'SALES' && (
+                <>
+                  <KpiCard label="Purchases" value={Number(d.purchases).toLocaleString()} icon={ShoppingCart} iconBg="bg-emerald-50" />
+                  <KpiCard label="ROAS" value={`${Number(d.roas).toFixed(2)}x`} icon={DollarSign} iconBg="bg-green-50" />
+                  <KpiCard label="CPA" value={`$${Number(d.cpa).toFixed(2)}`} icon={DollarSign} iconBg="bg-gray-50" />
+                </>
+              )}
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Campaign table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="text-sm font-medium text-gray-700">All Campaigns</h3>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Campaign</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Type</th>
+              <th className="px-5 py-3 text-right text-xs font-medium text-gray-500">Spend</th>
+              <th className="px-5 py-3 text-right text-xs font-medium text-gray-500">Impressions</th>
+              <th className="px-5 py-3 text-right text-xs font-medium text-gray-500">Clicks</th>
+              <th className="px-5 py-3 text-right text-xs font-medium text-gray-500">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {campaigns.map((c) => {
+              const totals = c.metrics.reduce(
+                (acc, m) => ({ spend: acc.spend + m.spend, impressions: acc.impressions + m.impressions, clicks: acc.clicks + m.clicks }),
+                { spend: 0, impressions: 0, clicks: 0 },
+              )
+              return (
+                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-5 py-3 font-medium text-gray-900 truncate max-w-[240px]">{c.name}</td>
+                  <td className="px-5 py-3">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[c.type]}`}>
+                      {c.type}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right text-gray-700">${totals.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                  <td className="px-5 py-3 text-right text-gray-700">{totals.impressions.toLocaleString()}</td>
+                  <td className="px-5 py-3 text-right text-gray-700">{totals.clicks.toLocaleString()}</td>
+                  <td className="px-5 py-3 text-right">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {c.status}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

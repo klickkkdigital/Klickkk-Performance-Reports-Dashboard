@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Clients ───────────────────────────────────────────────────────────────
+
+model Client {
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique
+  logoUrl      String?
+  primaryColor String  @default("#6366f1")
+  websiteUrl   String?
+  industry     String?
+  isActive     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  connections DataConnection[]
+  reports     Report[]
+  campaigns   Campaign[]
+}
+
+// ─── Users ─────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  clientId     String?
+  client       Client?  @relation(fields: [clientId], references: [id])
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(CLIENT_VIEWER)
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  CLIENT_VIEWER
+}
+
+// ─── Data Connections ──────────────────────────────────────────────────────
+
+model DataConnection {
+  id             String     @id @default(cuid())
+  clientId       String
+  client         Client     @relation(fields: [clientId], references: [id])
+  platform       Platform
+  accountId      String
+  accountName    String
+  accessToken    String
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  scopes         String[]
+  isActive       Boolean    @default(true)
+  lastSyncedAt   DateTime?
+  lastSyncStatus SyncStatus @default(NEVER)
+  lastSyncError  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, platform, accountId])
+}
+
+enum Platform {
+  META
+  SHOPIFY
+  GOOGLE_ANALYTICS
+}
+
+enum SyncStatus {
+  NEVER
+  SUCCESS
+  FAILED
+  SYNCING
+}
+
+// ─── Campaigns ─────────────────────────────────────────────────────────────
+
+model Campaign {
+  id         String       @id @default(cuid())
+  clientId   String
+  client     Client       @relation(fields: [clientId], references: [id])
+  platform   Platform
+  externalId String
+  name       String
+  type       CampaignType
+  status     String       @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metrics CampaignMetric[]
+
+  @@unique([clientId, platform, externalId])
+  @@index([clientId, type])
+}
+
+enum CampaignType {
+  AWARENESS
+  TRAFFIC
+  SALES
+}
+
+// ─── Campaign Metrics (daily) ──────────────────────────────────────────────
+
+model CampaignMetric {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  date       DateTime @db.Date
+
+  // Universal
+  spend    Float @default(0)
+  currency String @default("USD")
+
+  // Awareness
+  impressions Int   @default(0)
+  reach       Int   @default(0)
+  frequency   Float @default(0)
+  cpm         Float @default(0)
+
+  // Traffic
+  clicks           Int   @default(0)
+  ctr              Float @default(0)
+  cpc              Float @default(0)
+  landingPageViews Int   @default(0)
+
+  // Sales
+  purchases          Int   @default(0)
+  purchaseValue      Float @default(0)
+  roas               Float @default(0)
+  cpa                Float @default(0)
+  addToCart          Int   @default(0)
+  checkoutsInitiated Int   @default(0)
+
+  @@unique([campaignId, date])
+  @@index([campaignId, date])
+}
+
+// ─── Shopify Metrics (daily) ────────────────────────────────────────────────
+
+model ShopifyMetric {
+  id                 String   @id @default(cuid())
+  clientId           String
+  date               DateTime @db.Date
+  totalRevenue       Float    @default(0)
+  totalOrders        Int      @default(0)
+  avgOrderValue      Float    @default(0)
+  newCustomers       Int      @default(0)
+  returningCustomers Int      @default(0)
+  refunds            Float    @default(0)
+  conversionRate     Float    @default(0)
+  currency           String   @default("USD")
+
+  @@unique([clientId, date])
+  @@index([clientId, date])
+}
+
+model TopProduct {
+  id          String  @id @default(cuid())
+  clientId    String
+  month       String
+  productId   String
+  productName String
+  imageUrl    String?
+  revenue     Float   @default(0)
+  unitsSold   Int     @default(0)
+  rank        Int
+
+  @@unique([clientId, month, productId])
+}
+
+// ─── GA4 Metrics (daily) ────────────────────────────────────────────────────
+
+model AnalyticsMetric {
+  id                 String   @id @default(cuid())
+  clientId           String
+  date               DateTime @db.Date
+  sessions           Int      @default(0)
+  users              Int      @default(0)
+  newUsers           Int      @default(0)
+  pageviews          Int      @default(0)
+  bounceRate         Float    @default(0)
+  avgSessionDuration Float    @default(0)
+  organicSearch      Int      @default(0)
+  paidSearch         Int      @default(0)
+  social             Int      @default(0)
+  direct             Int      @default(0)
+  referral           Int      @default(0)
+  email              Int      @default(0)
+
+  @@unique([clientId, date])
+  @@index([clientId, date])
+}
+
+// ─── Monthly Reports ────────────────────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(cuid())
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id])
+  month       String
+  status      ReportStatus @default(PENDING)
+  pdfUrl      String?
+  summary     Json?
+  generatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, month])
+  @@index([clientId])
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
