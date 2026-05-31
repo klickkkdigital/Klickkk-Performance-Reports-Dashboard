@@ -58,14 +58,14 @@ export default async function OverviewPage() {
     SELECT
       s.date,
       COALESCE(SUM(m.spend), 0)::float AS spend,
-      COALESCE(s.total_revenue, 0)::float AS revenue
+      COALESCE(s."totalRevenue", 0)::float AS revenue
     FROM "ShopifyMetric" s
     LEFT JOIN "CampaignMetric" m ON m.date = s.date
     LEFT JOIN "Campaign" c ON c.id = m."campaignId" AND c."clientId" = ${clientId}
     WHERE s."clientId" = ${clientId}
       AND s.date >= ${monthStart}
       AND s.date <= ${monthEnd}
-    GROUP BY s.date, s.total_revenue
+    GROUP BY s.date, s."totalRevenue"
     ORDER BY s.date
   `
 

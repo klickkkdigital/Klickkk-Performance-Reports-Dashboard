@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       const acct = activeAccounts[0]
       const expiresAt = new Date(Date.now() + longToken.expires_in * 1000)
       await saveMetaConnection(state, acct.id, acct.name, longToken.access_token, expiresAt)
-      return NextResponse.redirect(new URL('/admin/connections?success=meta', req.url))
+      return NextResponse.redirect(new URL(`/admin/clients/${state}?success=meta`, req.url))
     }
 
     // Multiple accounts — encode and redirect to selection page
@@ -50,6 +50,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/admin/connections/meta-select?data=${encoded}`, req.url))
   } catch (err) {
     console.error('Meta OAuth callback error:', err)
-    return NextResponse.redirect(new URL('/admin/connections?error=meta_failed', req.url))
+    return NextResponse.redirect(new URL(`/admin/clients/${state}?error=meta_failed`, req.url))
   }
 }

@@ -29,6 +29,7 @@ export async function addShopifyConnection(_prev: unknown, formData: FormData) {
   })
 
   revalidatePath(`/admin/connections`)
+  revalidatePath(`/admin/clients/${clientId}`)
   return { success: true }
 }
 
@@ -48,6 +49,7 @@ export async function saveMetaConnection(
     update: { accessToken: encryptedToken, accountName: adAccountName, tokenExpiresAt: expiresAt, isActive: true },
   })
   revalidatePath('/admin/connections')
+  revalidatePath(`/admin/clients/${clientId}`)
 }
 
 // Google Analytics — token comes from OAuth callback
@@ -66,10 +68,12 @@ export async function saveGoogleConnection(
     update: { accessToken: encAccess, refreshToken: encRefresh, accountName: propertyName, isActive: true },
   })
   revalidatePath('/admin/connections')
+  revalidatePath(`/admin/clients/${clientId}`)
 }
 
 export async function removeConnection(connectionId: string) {
   await requireAdmin()
-  await db.dataConnection.update({ where: { id: connectionId }, data: { isActive: false } })
+  const conn = await db.dataConnection.update({ where: { id: connectionId }, data: { isActive: false } })
   revalidatePath('/admin/connections')
+  revalidatePath(`/admin/clients/${conn.clientId}`)
 }

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error')
 
   if (error || !code || !state) {
-    return NextResponse.redirect(new URL('/admin/connections?error=google_denied', req.url))
+    return NextResponse.redirect(new URL('/admin/clients?error=google_denied', req.url))
   }
 
   try {
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
     if (properties.length === 1) {
       await saveGoogleConnection(state, properties[0].id, properties[0].name, tokens.access_token, tokens.refresh_token)
-      return NextResponse.redirect(new URL('/admin/connections?success=google', req.url))
+      return NextResponse.redirect(new URL(`/admin/clients/${state}?success=google`, req.url))
     }
 
     const encoded = Buffer.from(JSON.stringify({
@@ -47,6 +47,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/admin/connections/ga4-select?data=${encoded}`, req.url))
   } catch (err) {
     console.error('Google OAuth callback error:', err)
-    return NextResponse.redirect(new URL('/admin/connections?error=google_failed', req.url))
+    return NextResponse.redirect(new URL(`/admin/clients/${state}?error=google_failed`, req.url))
   }
 }
