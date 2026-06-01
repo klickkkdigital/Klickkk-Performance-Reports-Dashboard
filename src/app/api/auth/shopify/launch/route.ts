@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-import { getBaseUrl } from '@/lib/env'
+import { getBaseUrl, getDashboardRedirect } from '@/lib/env'
 import {
   createShopifyState,
   getShopifyApiKey,
@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
   const shopParam = searchParams.get('shop')
 
   if (!shopParam) {
-    return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_DASHBOARD_URL || req.url))
+    return NextResponse.redirect(getDashboardRedirect('/login', req.url))
   }
 
   if (searchParams.has('hmac') && !verifyShopifyHmac(searchParams)) {
-    return NextResponse.redirect(new URL('/login?error=shopify_invalid_launch', process.env.NEXT_PUBLIC_DASHBOARD_URL || req.url))
+    return NextResponse.redirect(getDashboardRedirect('/login?error=shopify_invalid_launch', req.url))
   }
 
   try {
@@ -41,6 +41,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(installUrl)
   } catch (error) {
     console.error('Shopify launch error:', error)
-    return NextResponse.redirect(new URL('/login?error=shopify_launch_failed', process.env.NEXT_PUBLIC_DASHBOARD_URL || req.url))
+    return NextResponse.redirect(getDashboardRedirect('/login?error=shopify_launch_failed', req.url))
   }
 }

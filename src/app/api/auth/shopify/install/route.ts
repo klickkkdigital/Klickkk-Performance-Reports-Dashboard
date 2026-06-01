@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { requireAdmin } from '@/lib/auth'
+import { getDashboardRedirect } from '@/lib/env'
 import {
   createPendingShopifyClient,
   getShopifyInstallUrl,
@@ -41,19 +42,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(getShopifyInstallUrl())
     } catch (error) {
       console.error('Shopify install token error:', error)
-      return NextResponse.redirect(new URL('/admin/connections?error=shopify_install_state_failed', req.url))
+      return NextResponse.redirect(getDashboardRedirect('/admin/connections?error=shopify_install_state_failed', req.url))
     }
   }
 
   try {
     await requireAdmin()
   } catch {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(getDashboardRedirect('/login', req.url))
   }
 
   const clientId = searchParams.get('clientId')
   if (!clientId) {
-    return NextResponse.redirect(new URL('/admin/connections?error=shopify_missing_client', req.url))
+    return NextResponse.redirect(getDashboardRedirect('/admin/connections?error=shopify_missing_client', req.url))
   }
 
   try {
@@ -71,6 +72,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(getShopifyInstallUrl())
   } catch (error) {
     console.error('Shopify install launch error:', error)
-    return NextResponse.redirect(new URL(`/admin/clients/${clientId}?error=shopify_install_link_missing`, req.url))
+    return NextResponse.redirect(getDashboardRedirect(`/admin/clients/${clientId}?error=shopify_install_link_missing`, req.url))
   }
 }

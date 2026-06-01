@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
-import { getBaseUrl } from '@/lib/env'
+import { getBaseUrl, getDashboardRedirect, getDashboardUrl } from '@/lib/env'
 import { createLoginTransferToken } from '@/lib/session'
 import { saveShopifyConnectionRecord } from '@/lib/shopify-connection'
 import {
@@ -172,7 +172,7 @@ export async function GET(req: NextRequest) {
   const stateParam = searchParams.get('state')
 
   if (!code || !shopParam || !verifyShopifyHmac(searchParams)) {
-    return NextResponse.redirect(new URL('/admin/connections?error=shopify_denied', req.url))
+    return NextResponse.redirect(getDashboardRedirect('/admin/connections?error=shopify_denied', req.url))
   }
 
   try {
@@ -207,7 +207,7 @@ export async function GET(req: NextRequest) {
     await saveShopifyConnectionRecord(client.id, shop, token.access_token, scopes, shopDetails.name)
     cookieStore.delete(SHOPIFY_PENDING_CLIENT_COOKIE)
 
-    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || getBaseUrl(req.url)
+    const dashboardUrl = getDashboardUrl(req.url)
     const transferToken = await createLoginTransferToken({
       userId: user.id,
       role: 'CLIENT_VIEWER',
@@ -219,6 +219,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   } catch (error) {
     console.error('Shopify OAuth callback error:', error)
-    return NextResponse.redirect(new URL('/admin/connections?error=shopify_failed', req.url))
+    return NextResponse.redirect(getDashboardRedirect('/admin/connections?error=shopify_failed', req.url))
   }
 }
