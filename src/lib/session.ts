@@ -8,7 +8,11 @@ const SESSION_COOKIE = 'klickkk_session'
 const EXPIRY = '7d'
 
 function getSecret() {
-  return new TextEncoder().encode(requireEnv('SESSION_SECRET'))
+  const secret = requireEnv('SESSION_SECRET')
+  if (process.env.NODE_ENV === 'production' && secret.length < 32) {
+    throw new Error('SESSION_SECRET must be at least 32 characters in production.')
+  }
+  return new TextEncoder().encode(secret)
 }
 
 export type SessionPayload = {
