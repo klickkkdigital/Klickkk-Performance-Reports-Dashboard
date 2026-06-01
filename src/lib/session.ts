@@ -2,10 +2,14 @@ import 'server-only'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { UserRole } from '@prisma/client'
+import { requireEnv } from './env'
 
 const SESSION_COOKIE = 'klickkk_session'
-const SECRET = new TextEncoder().encode(process.env.SESSION_SECRET!)
 const EXPIRY = '7d'
+
+function getSecret() {
+  return new TextEncoder().encode(requireEnv('SESSION_SECRET'))
+}
 
 export type SessionPayload = {
   userId: string
@@ -19,7 +23,7 @@ export async function createSession(payload: SessionPayload) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(EXPIRY)
-    .sign(SECRET)
+    .sign(getSecret())
 
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, token, {
@@ -37,7 +41,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null
 
   try {
-    const { payload } = await jwtVerify(token, SECRET)
+    const { payload } = await jwtVerify(token, getSecret())
     return payload as unknown as SessionPayload
   } catch {
     return null

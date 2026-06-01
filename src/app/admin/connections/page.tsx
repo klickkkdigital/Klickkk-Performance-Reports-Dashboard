@@ -48,7 +48,7 @@ export default async function ConnectionsPage({
       )}
       {params.success && (
         <div className="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
-          {params.success === 'meta' ? 'Meta' : 'Google Analytics'} connected successfully!
+          {params.success === 'meta' ? 'Meta' : params.success === 'shopify' ? 'Shopify' : 'Google Analytics'} connected successfully!
         </div>
       )}
 

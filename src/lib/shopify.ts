@@ -1,6 +1,7 @@
-const API_VERSION = '2024-04'
+import { getShopifyApiVersion } from './shopify-auth'
 
 export function shopifyClient(storeDomain: string, accessToken: string) {
+  const API_VERSION = getShopifyApiVersion()
   const base = `https://${storeDomain}/admin/api/${API_VERSION}`
   const headers = { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' }
 

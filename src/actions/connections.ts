@@ -4,62 +4,63 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { encrypt } from '@/lib/crypto'
 import { requireAdmin } from '@/lib/auth'
+import { getShopifyApiKey, normalizeShopDomain } from '@/lib/shopify-auth'
+import { redirect } from 'next/navigation'
 
-function normalizeShopifyDomain(websiteUrl: string) {
-  const value = websiteUrl.trim()
-  const url = value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`
-
-  try {
-    return new URL(url).hostname.toLowerCase().replace(/^www\./, '')
-  } catch {
-    return value.toLowerCase().replace(/^www\./, '')
-  }
-}
-
-// Shopify — manual app credential input for admin-managed connections
+// Shopify — OAuth install for admin-managed connections
 const shopifySchema = z.object({
   clientId: z.string(),
-  websiteUrl: z.string().min(1, 'Website URL is required').transform(normalizeShopifyDomain),
-  shopifyClientId: z.string().min(1, 'Client ID is required'),
-  shopifySecretKey: z.string().min(1, 'Secret key is required'),
+  shop: z.string().min(1, 'Store domain is required'),
 })
 
-export async function addShopifyConnection(_prev: unknown, formData: FormData) {
+export async function startShopifyInstall(_prev: unknown, formData: FormData) {
   await requireAdmin()
 
   const parsed = shopifySchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { clientId, websiteUrl, shopifyClientId, shopifySecretKey } = parsed.data
-  const [encryptedSecretKey, encryptedClientId] = await Promise.all([
-    encrypt(shopifySecretKey),
-    encrypt(shopifyClientId),
-  ])
+  let shop: string
+  try {
+    shop = normalizeShopDomain(parsed.data.shop)
+    getShopifyApiKey()
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Unable to start Shopify install.' }
+  }
 
+  const params = new URLSearchParams({ clientId: parsed.data.clientId, shop })
+  redirect(`/api/auth/shopify/start?${params.toString()}`)
+}
+
+export async function saveShopifyConnection(
+  clientId: string,
+  shop: string,
+  accessToken: string,
+  scopes: string[],
+  shopName?: string,
+) {
+  await requireAdmin()
+  const encryptedToken = await encrypt(accessToken)
   await db.dataConnection.upsert({
-    where: { clientId_platform_accountId: { clientId, platform: 'SHOPIFY', accountId: websiteUrl } },
+    where: { clientId_platform_accountId: { clientId, platform: 'SHOPIFY', accountId: shop } },
     create: {
       clientId,
       platform: 'SHOPIFY',
-      accountId: websiteUrl,
-      accountName: websiteUrl,
-      accessToken: encryptedSecretKey,
-      refreshToken: encryptedClientId,
-      scopes: ['shopify_app_credentials'],
+      accountId: shop,
+      accountName: shopName || shop,
+      accessToken: encryptedToken,
+      scopes,
       isActive: true,
     },
     update: {
-      accountName: websiteUrl,
-      accessToken: encryptedSecretKey,
-      refreshToken: encryptedClientId,
-      scopes: ['shopify_app_credentials'],
+      accountName: shopName || shop,
+      accessToken: encryptedToken,
+      refreshToken: null,
+      scopes,
       isActive: true,
     },
   })
-
   revalidatePath(`/admin/connections`)
   revalidatePath(`/admin/clients/${clientId}`)
-  return { success: true }
 }
 
 // Meta — token comes from OAuth callback, stored here after exchange
