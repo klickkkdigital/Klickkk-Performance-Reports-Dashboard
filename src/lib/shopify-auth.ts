@@ -2,10 +2,11 @@ import crypto from 'crypto'
 import { requireEnv } from './env'
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000
+export const SHOPIFY_PENDING_CLIENT_COOKIE = 'klickkk_shopify_client'
 
 type ShopifyState = {
   clientId: string
-  shop: string
+  shop?: string
   ts: number
 }
 
@@ -37,6 +38,10 @@ export function getShopifyApiVersion() {
   return process.env.SHOPIFY_API_VERSION || '2026-04'
 }
 
+export function getShopifyInstallUrl() {
+  return requireEnv('SHOPIFY_INSTALL_URL')
+}
+
 export function normalizeShopDomain(input: string) {
   const value = input.trim().toLowerCase()
   const withProtocol = value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`
@@ -52,12 +57,17 @@ export function createShopifyState(clientId: string, shop: string) {
   return `${payload}.${sign(payload)}`
 }
 
+export function createPendingShopifyClient(clientId: string) {
+  const payload = base64Url(JSON.stringify({ clientId, ts: Date.now() } satisfies ShopifyState))
+  return `${payload}.${sign(payload)}`
+}
+
 export function verifyShopifyState(state: string) {
   const [payload, signature] = state.split('.')
   if (!payload || !signature || sign(payload) !== signature) throw new Error('Invalid Shopify state.')
 
   const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as ShopifyState
-  if (!parsed.clientId || !parsed.shop || !parsed.ts) throw new Error('Invalid Shopify state.')
+  if (!parsed.clientId || !parsed.ts) throw new Error('Invalid Shopify state.')
   if (Date.now() - parsed.ts > STATE_MAX_AGE_MS) throw new Error('Expired Shopify state.')
   return parsed
 }

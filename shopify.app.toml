@@ -1,0 +1,18 @@
+name = "Klickkk Reporting"
+client_id = "6cf7cd34ac10bac317b6081400b0fea1"
+application_url = "https://reporting.klickkk.app"
+embedded = false
+
+[access_scopes]
+scopes = "read_orders,read_products"
+
+[auth]
+redirect_urls = [
+  "https://reporting.klickkk.app/api/auth/shopify/callback"
+]
+
+[webhooks]
+api_version = "2026-04"
+
+[build]
+automatically_update_urls_on_dev = false

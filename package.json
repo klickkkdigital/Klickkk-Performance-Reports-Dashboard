@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node scripts/kill-port-3000.mjs && next dev -p 3000",
     "build": "next build",
-    "start": "node scripts/kill-port-3000.mjs && next start -p 3000",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",

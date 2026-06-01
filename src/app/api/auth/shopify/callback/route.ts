@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { requireAdmin } from '@/lib/auth'
 import { getBaseUrl } from '@/lib/env'
 import {
@@ -8,6 +9,7 @@ import {
   normalizeShopDomain,
   verifyShopifyHmac,
   verifyShopifyState,
+  SHOPIFY_PENDING_CLIENT_COOKIE,
 } from '@/lib/shopify-auth'
 import { saveShopifyConnection } from '@/actions/connections'
 
@@ -70,14 +72,16 @@ export async function GET(req: NextRequest) {
   const shopParam = searchParams.get('shop')
   const stateParam = searchParams.get('state')
 
-  if (!code || !shopParam || !stateParam || !verifyShopifyHmac(searchParams)) {
+  if (!code || !shopParam || !verifyShopifyHmac(searchParams)) {
     return NextResponse.redirect(new URL('/admin/connections?error=shopify_denied', req.url))
   }
 
   try {
     const shop = normalizeShopDomain(shopParam)
-    const state = verifyShopifyState(stateParam)
-    if (state.shop !== shop) throw new Error('Shopify state shop mismatch.')
+    const cookieStore = await cookies()
+    const pendingClient = cookieStore.get(SHOPIFY_PENDING_CLIENT_COOKIE)?.value
+    const state = verifyShopifyState(stateParam || pendingClient || '')
+    if (state.shop && state.shop !== shop) throw new Error('Shopify state shop mismatch.')
 
     const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
       method: 'POST',
@@ -96,6 +100,7 @@ export async function GET(req: NextRequest) {
 
     await registerUninstallWebhook(shop, token.access_token, req.url)
     await saveShopifyConnection(state.clientId, shop, token.access_token, scopes, shopName)
+    cookieStore.delete(SHOPIFY_PENDING_CLIENT_COOKIE)
 
     return NextResponse.redirect(new URL(`/admin/clients/${state.clientId}?success=shopify`, req.url))
   } catch (error) {
