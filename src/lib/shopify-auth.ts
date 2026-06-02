@@ -60,8 +60,10 @@ export function createShopifyState(clientId: string, shop: string, returnUrl?: s
   return `${payload}.${sign(payload)}`
 }
 
-export function createPendingShopifyClient(clientId: string) {
-  const payload = base64Url(JSON.stringify({ clientId, ts: Date.now() } satisfies ShopifyState))
+export function createPendingShopifyClient(clientId: string, returnUrl?: string) {
+  const data: ShopifyState = { clientId, ts: Date.now() }
+  if (returnUrl) data.returnUrl = returnUrl
+  const payload = base64Url(JSON.stringify(data))
   return `${payload}.${sign(payload)}`
 }
 

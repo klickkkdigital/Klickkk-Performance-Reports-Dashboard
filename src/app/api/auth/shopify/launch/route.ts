@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     installUrl.searchParams.set('scope', getShopifyScopes())
     installUrl.searchParams.set('redirect_uri', redirectUri)
     if (pendingState?.clientId) {
-      installUrl.searchParams.set('state', createShopifyState(pendingState.clientId, shop))
+      installUrl.searchParams.set('state', createShopifyState(pendingState.clientId, shop, pendingState.returnUrl))
     }
 
     return NextResponse.redirect(installUrl)

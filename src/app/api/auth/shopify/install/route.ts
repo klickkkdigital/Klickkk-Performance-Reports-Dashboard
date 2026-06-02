@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const pendingToken = createPendingShopifyClient(clientId)
+    const pendingToken = createPendingShopifyClient(clientId, `/admin/clients/${clientId}`)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL
     const appHost = hostFrom(appUrl)
 
