@@ -207,6 +207,13 @@ export async function GET(req: NextRequest) {
     await saveShopifyConnectionRecord(client.id, shop, token.access_token, scopes, shopDetails.name)
     cookieStore.delete(SHOPIFY_PENDING_CLIENT_COOKIE)
 
+    // Admin-initiated OAuth: the state carries a returnUrl so we redirect the admin back
+    // to their page without touching their session.
+    if (state?.returnUrl && state.returnUrl.startsWith('/')) {
+      return NextResponse.redirect(getDashboardRedirect(state.returnUrl, req.url))
+    }
+
+    // Merchant-initiated OAuth: create a CLIENT_VIEWER session for the store owner.
     const dashboardUrl = getDashboardUrl(req.url)
     const transferToken = await createLoginTransferToken({
       userId: user.id,

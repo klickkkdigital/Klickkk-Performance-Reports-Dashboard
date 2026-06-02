@@ -8,6 +8,7 @@ type ShopifyState = {
   clientId: string
   shop?: string
   ts: number
+  returnUrl?: string
 }
 
 function base64Url(input: string) {
@@ -52,8 +53,10 @@ export function normalizeShopDomain(input: string) {
   return hostname
 }
 
-export function createShopifyState(clientId: string, shop: string) {
-  const payload = base64Url(JSON.stringify({ clientId, shop, ts: Date.now() } satisfies ShopifyState))
+export function createShopifyState(clientId: string, shop: string, returnUrl?: string) {
+  const data: ShopifyState = { clientId, shop, ts: Date.now() }
+  if (returnUrl) data.returnUrl = returnUrl
+  const payload = base64Url(JSON.stringify(data))
   return `${payload}.${sign(payload)}`
 }
 

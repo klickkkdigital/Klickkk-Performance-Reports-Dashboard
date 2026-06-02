@@ -26,7 +26,9 @@ export async function GET(req: NextRequest) {
   try {
     const shop = normalizeShopDomain(shopParam)
     const redirectUri = `${getBaseUrl(req.url)}/api/auth/shopify/callback`
-    const state = createShopifyState(clientId, shop)
+    // Embed a returnUrl so the callback can redirect the admin back without
+    // overwriting their session.
+    const state = createShopifyState(clientId, shop, `/admin/clients/${clientId}`)
     const url = new URL(`https://${shop}/admin/oauth/authorize`)
     url.searchParams.set('client_id', getShopifyApiKey())
     url.searchParams.set('scope', getShopifyScopes())
