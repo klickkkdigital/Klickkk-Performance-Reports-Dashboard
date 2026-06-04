@@ -11,12 +11,17 @@ function hostFrom(value?: string) {
   }
 }
 
+function requestHost(req: NextRequest) {
+  return req.headers.get('x-forwarded-host') || req.headers.get('host') || req.nextUrl.host
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token')
   const dashboardUrl = getDashboardUrl(req.url)
+  const dashboardHost = hostFrom(dashboardUrl)
 
-  if (hostFrom(dashboardUrl) && req.nextUrl.host !== hostFrom(dashboardUrl)) {
+  if (dashboardHost && requestHost(req) !== dashboardHost) {
     const redirectUrl = new URL('/api/auth/session/consume', dashboardUrl)
     if (token) redirectUrl.searchParams.set('token', token)
     return NextResponse.redirect(redirectUrl)
