@@ -19,6 +19,9 @@ import {
 type TokenResponse = {
   access_token: string
   scope?: string
+  expires_in?: number
+  refresh_token?: string
+  refresh_token_expires_in?: number
 }
 
 type ShopResponse = {
@@ -183,14 +186,17 @@ export async function GET(req: NextRequest) {
     const state = rawState ? verifyShopifyState(rawState) : null
     if (state?.shop && state.shop !== shop) throw new Error('Shopify state shop mismatch.')
 
+    const tokenBody = new URLSearchParams({
+      client_id: getShopifyApiKey(),
+      client_secret: getShopifyApiSecret(),
+      code,
+      expiring: '1',
+    })
+
     const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: getShopifyApiKey(),
-        client_secret: getShopifyApiSecret(),
-        code,
-      }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      body: tokenBody,
     })
 
     if (!tokenRes.ok) throw new Error(`Shopify token exchange failed: ${tokenRes.status}`)
@@ -204,7 +210,15 @@ export async function GET(req: NextRequest) {
     const user = await getOrCreateClientUser(client.id, shop, shopDetails)
 
     await registerUninstallWebhook(shop, token.access_token, req.url)
-    await saveShopifyConnectionRecord(client.id, shop, token.access_token, scopes, shopDetails.name)
+    await saveShopifyConnectionRecord(
+      client.id,
+      shop,
+      token.access_token,
+      scopes,
+      shopDetails.name,
+      token.refresh_token,
+      token.expires_in,
+    )
     cookieStore.delete(SHOPIFY_PENDING_CLIENT_COOKIE)
 
     // Admin-initiated OAuth: the state carries a returnUrl so we redirect the admin back

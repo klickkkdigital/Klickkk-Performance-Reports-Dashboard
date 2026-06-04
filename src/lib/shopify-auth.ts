@@ -53,15 +53,10 @@ export function normalizeShopDomain(input: string) {
   return hostname
 }
 
-<<<<<<< Updated upstream
 export function createShopifyState(clientId: string, shop: string, returnUrl?: string) {
   const data: ShopifyState = { clientId, shop, ts: Date.now() }
   if (returnUrl) data.returnUrl = returnUrl
   const payload = base64Url(JSON.stringify(data))
-=======
-export function createShopifyState(shop: string, clientId?: string) {
-  const payload = base64Url(JSON.stringify({ clientId, shop, ts: Date.now() } satisfies ShopifyState))
->>>>>>> Stashed changes
   return `${payload}.${sign(payload)}`
 }
 
