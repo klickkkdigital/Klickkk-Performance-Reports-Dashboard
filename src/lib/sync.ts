@@ -24,6 +24,22 @@ export async function syncClientData(clientId: string, month: string) {
   )
 }
 
+export async function syncDataConnection(connectionId: string, month: string) {
+  const conn = await db.dataConnection.findUnique({
+    where: { id: connectionId },
+  })
+
+  if (!conn || !conn.isActive) return
+
+  const [year, mon] = month.split('-').map(Number)
+  const monthStart = startOfMonth(new Date(year, mon - 1))
+  const monthEnd = endOfMonth(monthStart)
+  const dateStart = format(monthStart, 'yyyy-MM-dd')
+  const dateEnd = format(monthEnd, 'yyyy-MM-dd')
+
+  await syncConnection(conn, dateStart, dateEnd)
+}
+
 async function syncConnection(
   conn: {
     id: string
