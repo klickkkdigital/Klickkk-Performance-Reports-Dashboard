@@ -6,6 +6,7 @@ import { encrypt } from '@/lib/crypto'
 import { requireAdmin } from '@/lib/auth'
 import { getShopifyApiKey, normalizeShopDomain } from '@/lib/shopify-auth'
 import { saveShopifyConnectionRecord } from '@/lib/shopify-connection'
+import { clearOAuthSelection, getOAuthSelection } from '@/lib/oauth-selection'
 import { redirect } from 'next/navigation'
 
 // Shopify — OAuth install for admin-managed connections
@@ -64,6 +65,25 @@ export async function saveMetaConnection(
   revalidatePath(`/admin/clients/${clientId}`)
 }
 
+export async function selectMetaConnection(formData: FormData) {
+  await requireAdmin()
+
+  const clientId = String(formData.get('clientId') || '')
+  const accountId = String(formData.get('accountId') || '')
+  const accountName = String(formData.get('accountName') || accountId)
+  const selectionId = String(formData.get('selectionId') || '')
+
+  const selection = selectionId ? await getOAuthSelection(selectionId, 'META') : null
+
+  if (!clientId || !accountId || !selection || selection.platform !== 'META' || selection.clientId !== clientId) {
+    redirect('/admin/connections?error=meta_selection_invalid')
+  }
+
+  await saveMetaConnection(clientId, accountId, accountName, selection.accessToken, new Date(Date.now() + selection.expiresIn * 1000))
+  await clearOAuthSelection()
+  redirect(`/admin/clients/${clientId}?success=meta`)
+}
+
 // Google Analytics — token comes from OAuth callback
 export async function saveGoogleConnection(
   clientId: string,
@@ -81,6 +101,25 @@ export async function saveGoogleConnection(
   })
   revalidatePath('/admin/connections')
   revalidatePath(`/admin/clients/${clientId}`)
+}
+
+export async function selectGoogleConnection(formData: FormData) {
+  await requireAdmin()
+
+  const clientId = String(formData.get('clientId') || '')
+  const propertyId = String(formData.get('propertyId') || '')
+  const propertyName = String(formData.get('propertyName') || propertyId)
+  const selectionId = String(formData.get('selectionId') || '')
+
+  const selection = selectionId ? await getOAuthSelection(selectionId, 'GOOGLE_ANALYTICS') : null
+
+  if (!clientId || !propertyId || !selection || selection.platform !== 'GOOGLE_ANALYTICS' || selection.clientId !== clientId) {
+    redirect('/admin/connections?error=google_selection_invalid')
+  }
+
+  await saveGoogleConnection(clientId, propertyId, propertyName, selection.accessToken, selection.refreshToken)
+  await clearOAuthSelection()
+  redirect(`/admin/clients/${clientId}?success=google`)
 }
 
 export async function removeConnection(connectionId: string) {

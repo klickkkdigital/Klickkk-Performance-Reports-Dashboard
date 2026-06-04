@@ -6,7 +6,6 @@ import Link from 'next/link'
 import SectionHeader from '@/components/ui/SectionHeader'
 import ConnectMetaButton from '../../connections/ConnectMetaButton'
 import ConnectGoogleButton from '../../connections/ConnectGoogleButton'
-import AddShopifyForm from '../../connections/AddShopifyForm'
 import GenerateReportButton from './GenerateReportButton'
 import DisconnectButton from './DisconnectButton'
 import { CheckCircle, XCircle, Clock, RefreshCw, ArrowLeft, Users, Plug } from 'lucide-react'
@@ -69,7 +68,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <div className="flex items-center gap-2">
             {!connectedPlatforms.has('META') && <ConnectMetaButton clientId={client.id} />}
             {!connectedPlatforms.has('GOOGLE_ANALYTICS') && <ConnectGoogleButton clientId={client.id} />}
-            {!connectedPlatforms.has('SHOPIFY') && <AddShopifyForm clientId={client.id} />}
           </div>
         </div>
 
@@ -77,7 +75,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <div className="px-5 py-10 text-center">
             <Plug size={28} className="text-gray-200 mx-auto mb-3" />
             <p className="text-sm text-gray-400 mb-1">No platforms connected yet</p>
-            <p className="text-xs text-gray-300">Use the buttons above to connect Meta, Shopify, or Google Analytics</p>
+            <p className="text-xs text-gray-300">Use the buttons above to connect Meta or Google Analytics. Shopify connects from the app install flow.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">

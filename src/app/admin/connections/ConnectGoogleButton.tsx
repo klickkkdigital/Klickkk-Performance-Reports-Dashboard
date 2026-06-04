@@ -1,27 +1,30 @@
-'use client'
+import { getDashboardUrl } from '@/lib/env'
 
 export default function ConnectGoogleButton({ clientId }: { clientId: string }) {
-  const SCOPES = [
-    'https://www.googleapis.com/auth/analytics.readonly',
-    'https://www.googleapis.com/auth/analytics.edit',
-  ].join(' ')
+  const clientIdValue = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  const SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'].join(' ')
 
-  const handleConnect = () => {
-    const redirectUri = `${window.location.origin}/api/auth/google/callback`
-    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-    url.searchParams.set('client_id', process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!)
-    url.searchParams.set('redirect_uri', redirectUri)
-    url.searchParams.set('response_type', 'code')
-    url.searchParams.set('scope', SCOPES)
-    url.searchParams.set('access_type', 'offline')
-    url.searchParams.set('prompt', 'consent')
-    url.searchParams.set('state', clientId)
-    window.location.href = url.toString()
+  if (!clientIdValue) {
+    return (
+      <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-100 text-gray-400 rounded-lg">
+        Connect GA4
+      </span>
+    )
   }
 
+  const redirectUri = `${getDashboardUrl()}/api/auth/google/callback`
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  url.searchParams.set('client_id', clientIdValue)
+  url.searchParams.set('redirect_uri', redirectUri)
+  url.searchParams.set('response_type', 'code')
+  url.searchParams.set('scope', SCOPES)
+  url.searchParams.set('access_type', 'offline')
+  url.searchParams.set('prompt', 'consent')
+  url.searchParams.set('state', clientId)
+
   return (
-    <button
-      onClick={handleConnect}
+    <a
+      href={url.toString()}
       className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
     >
       <svg className="w-3 h-3" viewBox="0 0 24 24">
@@ -31,6 +34,6 @@ export default function ConnectGoogleButton({ clientId }: { clientId: string }) 
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
       </svg>
       Connect GA4
-    </button>
+    </a>
   )
 }

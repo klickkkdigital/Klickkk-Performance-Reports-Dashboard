@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { getDashboardRedirect } from '@/lib/env'
+import { getDashboardRedirect, getDashboardUrl } from '@/lib/env'
 import { exchangeCodeForToken, getLongLivedToken, fetchAdAccounts } from '@/lib/meta'
 import { saveMetaConnection } from '@/actions/connections'
+import { createOAuthSelection } from '@/lib/oauth-selection'
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const redirectUri = `${new URL(req.url).origin}/api/auth/meta/callback`
+    const redirectUri = `${getDashboardUrl(req.url)}/api/auth/meta/callback`
 
     const shortToken = await exchangeCodeForToken(code, redirectUri)
     const longToken = await getLongLivedToken(shortToken.access_token)
@@ -39,10 +40,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(getDashboardRedirect(`/admin/clients/${state}?success=meta`, req.url))
     }
 
+    const selectionId = await createOAuthSelection({
+      platform: 'META',
+      clientId: state,
+      accessToken: longToken.access_token,
+      expiresIn: longToken.expires_in,
+    })
+
     const encoded = Buffer.from(JSON.stringify({
       clientId: state,
-      token: longToken.access_token,
-      expiresIn: longToken.expires_in,
+      selectionId,
       accounts: activeAccounts,
     })).toString('base64url')
 

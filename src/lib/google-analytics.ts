@@ -1,6 +1,10 @@
 const GA4_API = 'https://analyticsdata.googleapis.com/v1beta'
 const OAUTH_API = 'https://oauth2.googleapis.com'
 
+function getGoogleClientId() {
+  return process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+}
+
 export async function fetchGA4Report(
   accessToken: string,
   propertyId: string,
@@ -35,7 +39,7 @@ export async function refreshGoogleToken(refreshToken: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
+      client_id: getGoogleClientId(),
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
       refresh_token: refreshToken,
       grant_type: 'refresh_token',
@@ -50,7 +54,7 @@ export async function exchangeGoogleCode(code: string, redirectUri: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
+      client_id: getGoogleClientId(),
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
       redirect_uri: redirectUri,
       code,
@@ -60,7 +64,7 @@ export async function exchangeGoogleCode(code: string, redirectUri: string) {
   if (!res.ok) throw new Error('Google code exchange failed')
   return res.json() as Promise<{
     access_token: string
-    refresh_token: string
+    refresh_token?: string
     expires_in: number
     scope: string
   }>

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { getDashboardRedirect } from '@/lib/env'
+import { getDashboardRedirect, getDashboardUrl } from '@/lib/env'
 import { exchangeGoogleCode, listGA4Properties } from '@/lib/google-analytics'
 import { saveGoogleConnection } from '@/actions/connections'
+import { createOAuthSelection } from '@/lib/oauth-selection'
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,8 +22,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const redirectUri = `${new URL(req.url).origin}/api/auth/google/callback`
+    const redirectUri = `${getDashboardUrl(req.url)}/api/auth/google/callback`
     const tokens = await exchangeGoogleCode(code, redirectUri)
+    if (!tokens.refresh_token) {
+      return NextResponse.redirect(getDashboardRedirect(`/admin/clients/${state}?error=google_refresh_missing`, req.url))
+    }
+
     const summaries = await listGA4Properties(tokens.access_token)
 
     const properties = summaries.accountSummaries?.flatMap(
@@ -38,10 +43,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(getDashboardRedirect(`/admin/clients/${state}?success=google`, req.url))
     }
 
-    const encoded = Buffer.from(JSON.stringify({
+    const selectionId = await createOAuthSelection({
+      platform: 'GOOGLE_ANALYTICS',
       clientId: state,
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
+    })
+
+    const encoded = Buffer.from(JSON.stringify({
+      clientId: state,
+      selectionId,
       properties,
     })).toString('base64url')
 

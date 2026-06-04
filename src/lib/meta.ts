@@ -2,6 +2,10 @@ import { CampaignType } from '@prisma/client'
 
 const GRAPH_API = 'https://graph.facebook.com/v20.0'
 
+function getMetaAppId() {
+  return process.env.META_APP_ID || process.env.NEXT_PUBLIC_META_APP_ID || ''
+}
+
 // Map Meta objective strings → our CampaignType
 const OBJECTIVE_MAP: Record<string, CampaignType> = {
   BRAND_AWARENESS: 'AWARENESS',
@@ -87,7 +91,7 @@ export function parseActionValue(
 
 export async function exchangeCodeForToken(code: string, redirectUri: string) {
   const url = new URL(`${GRAPH_API}/oauth/access_token`)
-  url.searchParams.set('client_id', process.env.META_APP_ID!)
+  url.searchParams.set('client_id', getMetaAppId())
   url.searchParams.set('client_secret', process.env.META_APP_SECRET!)
   url.searchParams.set('redirect_uri', redirectUri)
   url.searchParams.set('code', code)
@@ -100,7 +104,7 @@ export async function exchangeCodeForToken(code: string, redirectUri: string) {
 export async function getLongLivedToken(shortToken: string) {
   const url = new URL(`${GRAPH_API}/oauth/access_token`)
   url.searchParams.set('grant_type', 'fb_exchange_token')
-  url.searchParams.set('client_id', process.env.META_APP_ID!)
+  url.searchParams.set('client_id', getMetaAppId())
   url.searchParams.set('client_secret', process.env.META_APP_SECRET!)
   url.searchParams.set('fb_exchange_token', shortToken)
 

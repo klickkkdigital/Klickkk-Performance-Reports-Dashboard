@@ -4,7 +4,6 @@ import { format } from 'date-fns'
 import SectionHeader from '@/components/ui/SectionHeader'
 import ConnectMetaButton from './ConnectMetaButton'
 import ConnectGoogleButton from './ConnectGoogleButton'
-import AddShopifyForm from './AddShopifyForm'
 import { CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react'
 
 const syncStatusIcon = {
@@ -39,7 +38,7 @@ export default async function ConnectionsPage({
 
   return (
     <div>
-      <SectionHeader title="Data Connections" description="Connect Meta, Shopify, and Google Analytics for each client." />
+      <SectionHeader title="Data Connections" description="Connect Meta and Google Analytics for each client. Shopify stores connect from the Shopify app install flow." />
 
       {params.error && (
         <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -68,12 +67,11 @@ export default async function ConnectionsPage({
               <div className="flex items-center gap-2">
                 <ConnectMetaButton clientId={client.id} />
                 <ConnectGoogleButton clientId={client.id} />
-                <AddShopifyForm clientId={client.id} />
               </div>
             </div>
 
             {client.connections.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-gray-400 text-center">No connections yet — use the buttons above to connect platforms.</p>
+              <p className="px-5 py-8 text-sm text-gray-400 text-center">No connections yet. Shopify stores appear here after the Shopify app is installed.</p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
