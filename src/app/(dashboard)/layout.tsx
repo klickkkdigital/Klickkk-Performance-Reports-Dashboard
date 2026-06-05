@@ -15,11 +15,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="dashboard-shell flex h-screen">
       <Sidebar session={session} client={client} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar session={session} client={client} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>
   )

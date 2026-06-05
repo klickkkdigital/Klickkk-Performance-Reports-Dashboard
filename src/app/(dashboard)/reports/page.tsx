@@ -2,6 +2,10 @@ import { requireSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { format } from 'date-fns'
 import SectionHeader from '@/components/ui/SectionHeader'
+import { Card } from '@heroui/react/card'
+import { Chip } from '@heroui/react/chip'
+import { EmptyState } from '@heroui/react/empty-state'
+import { buttonVariants } from '@heroui/react/button'
 import { FileText, CheckCircle, Clock, XCircle, Loader } from 'lucide-react'
 
 const statusIcon = {
@@ -12,11 +16,11 @@ const statusIcon = {
 }
 
 const statusStyle = {
-  READY: 'text-emerald-600 bg-emerald-50',
-  PENDING: 'text-gray-500 bg-gray-100',
-  PROCESSING: 'text-blue-600 bg-blue-50',
-  FAILED: 'text-red-500 bg-red-50',
-}
+  READY: 'success',
+  PENDING: 'default',
+  PROCESSING: 'accent',
+  FAILED: 'danger',
+} as const
 
 export default async function ReportsPage() {
   const session = await requireSession()
@@ -33,10 +37,12 @@ export default async function ReportsPage() {
 
       <div className="space-y-3">
         {reports.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <FileText size={32} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-gray-500">No reports generated yet.</p>
-          </div>
+          <Card className="border border-default-200/80 bg-content1/95 p-12 text-center shadow-sm">
+            <EmptyState>
+              <FileText size={32} className="mx-auto mb-3 text-default-300" />
+              <p className="text-sm text-default-500">No reports generated yet.</p>
+            </EmptyState>
+          </Card>
         ) : reports.map((r) => {
           const Icon = statusIcon[r.status]
           const style = statusStyle[r.status]
@@ -44,34 +50,34 @@ export default async function ReportsPage() {
           const label = format(new Date(parseInt(year), parseInt(mon) - 1), 'MMMM yyyy')
 
           return (
-            <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between">
+            <Card key={r.id} className="flex flex-col gap-4 border border-default-200/80 bg-content1/95 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
-                  <FileText size={18} className="text-indigo-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#f8f8f8]">
+                  <FileText size={18} className="text-[#0b0b0b]" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{label}</p>
+                  <p className="text-sm font-medium text-foreground">{label}</p>
                   {r.generatedAt && (
-                    <p className="text-xs text-gray-400">Generated {format(r.generatedAt, 'MMM d, yyyy')}</p>
+                    <p className="text-xs text-default-400">Generated {format(r.generatedAt, 'MMM d, yyyy')}</p>
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${style}`}>
+                <Chip color={style} variant="soft" size="sm" className="gap-1.5">
                   <Icon size={11} />
                   {r.status}
-                </span>
+                </Chip>
                 {r.status === 'READY' && (
                   <a
                     href={`/reports/${r.id}/pdf`}
                     target="_blank"
-                    className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className={buttonVariants({ variant: 'primary', size: 'sm' })}
                   >
                     Download PDF
                   </a>
                 )}
               </div>
-            </div>
+            </Card>
           )
         })}
       </div>

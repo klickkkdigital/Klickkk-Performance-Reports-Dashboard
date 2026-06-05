@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { SessionPayload } from '@/lib/session'
 import {
   LayoutDashboard,
@@ -36,50 +39,57 @@ export default function Sidebar({
 }) {
   const isAdmin = session.role === 'SUPER_ADMIN'
   const navItems = isAdmin ? adminNav : clientNav
-  const brandColor = client?.primaryColor ?? '#6366f1'
+  const brandColor = client?.primaryColor ?? '#0b0b0b'
+  const pathname = usePathname()
 
   return (
-    <aside className="w-60 bg-white border-r border-gray-200 flex flex-col">
-      {/* Logo / Brand */}
-      <div className="p-5 border-b border-gray-200">
+    <aside className="hidden w-64 shrink-0 border-r border-default-200/80 bg-white/88 backdrop-blur-xl lg:flex lg:flex-col">
+      <div className="p-4">
         {client?.logoUrl ? (
-          <img src={client.logoUrl} alt={client.name} className="h-8 object-contain" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={client.logoUrl} alt={client.name} className="h-9 object-contain" />
         ) : (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3 rounded-lg border border-default-200 bg-content1 px-3 py-3 shadow-sm">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-sm font-bold text-white shadow-sm"
               style={{ backgroundColor: brandColor }}
             >
               {isAdmin ? 'K' : client?.name[0] ?? 'K'}
             </div>
-            <span className="font-semibold text-gray-900 text-sm">
+            <span className="min-w-0 text-sm font-semibold leading-tight text-foreground">
               {isAdmin ? 'Klickkk : Performance Reports' : (client?.name ?? 'Dashboard')}
             </span>
           </div>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5">
+      <nav className="flex-1 space-y-1 px-3 py-2">
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+              pathname === href
+                ? 'bg-[#0b0b0b] !text-white shadow-sm [&_svg]:!text-white'
+                : 'text-default-600 hover:bg-default-100 hover:text-foreground'
+            }`}
           >
-            <Icon size={16} />
+            <Icon size={17} />
             {label}
           </Link>
         ))}
       </nav>
 
-      {/* Bottom */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="border-t border-default-200/80 p-3">
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors"
+          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+            pathname === '/settings'
+              ? 'bg-[#0b0b0b] !text-white [&_svg]:!text-white'
+              : 'text-default-500 hover:bg-default-100 hover:text-foreground'
+          }`}
         >
-          <Settings size={16} />
+          <Settings size={17} />
           Settings
         </Link>
       </div>

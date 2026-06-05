@@ -1,20 +1,21 @@
 'use client'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { Card } from '@heroui/react/card'
 
 type Props = {
   data: Array<{ type: string; spend: number; impressions: number; clicks: number; roas: number }>
 }
 
 const COLORS: Record<string, string> = {
-  AWARENESS: '#8b5cf6',
-  TRAFFIC: '#3b82f6',
-  SALES: '#10b981',
+  AWARENESS: '#0b0b0b',
+  TRAFFIC: '#777777',
+  SALES: '#babbbb',
 }
 
 export default function CampaignTypeBreakdown({ data }: Props) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-sm font-medium text-gray-700 mb-4">Spend by Campaign Type</h3>
+    <Card className="border border-default-200/80 bg-content1/95 p-5 shadow-sm">
+      <h3 className="mb-4 text-sm font-semibold text-foreground">Spend by Campaign Type</h3>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -26,7 +27,7 @@ export default function CampaignTypeBreakdown({ data }: Props) {
           />
           <Bar dataKey="spend" radius={[4, 4, 0, 0]}>
             {data.map((d) => (
-              <Cell key={d.type} fill={COLORS[d.type] ?? '#6366f1'} />
+              <Cell key={d.type} fill={COLORS[d.type] ?? '#0b0b0b'} />
             ))}
           </Bar>
         </BarChart>
@@ -35,13 +36,13 @@ export default function CampaignTypeBreakdown({ data }: Props) {
         {data.map((d) => (
           <div key={d.type} className="text-center">
             <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{ backgroundColor: COLORS[d.type] }} />
-            <p className="text-xs text-gray-500 capitalize">{d.type.toLowerCase()}</p>
+            <p className="text-xs capitalize text-default-500">{d.type.toLowerCase()}</p>
             {d.type === 'SALES' && (
-              <p className="text-xs font-medium text-gray-900">ROAS {d.roas.toFixed(2)}x</p>
+              <p className="text-xs font-medium text-foreground">ROAS {d.roas.toFixed(2)}x</p>
             )}
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   )
 }

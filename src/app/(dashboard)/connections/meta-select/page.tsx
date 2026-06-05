@@ -1,6 +1,7 @@
 import { requireConnectionAccess, requireSession } from '@/lib/auth'
 import { selectMetaConnection } from '@/actions/connections'
 import SectionHeader from '@/components/ui/SectionHeader'
+import { Megaphone } from 'lucide-react'
 
 type MetaAccount = {
   id: string
@@ -56,7 +57,8 @@ export default async function ClientMetaSelectPage({
             <input type="hidden" name="selectionId" value={payload.selectionId} />
             <input type="hidden" name="accountId" value={account.id} />
             <input type="hidden" name="accountName" value={account.name} />
-            <button className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-[#0b0b0b] !text-white rounded-lg hover:bg-[#2a2a2a] transition-colors">
+              <Megaphone size={13} />
               Connect
             </button>
           </form>

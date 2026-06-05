@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/auth'
 import { selectGoogleConnection } from '@/actions/connections'
 import SectionHeader from '@/components/ui/SectionHeader'
+import { BarChart3 } from 'lucide-react'
 
 type GA4Property = {
   id: string
@@ -53,7 +54,8 @@ export default async function GA4SelectPage({
             <input type="hidden" name="selectionId" value={payload.selectionId} />
             <input type="hidden" name="propertyId" value={property.id} />
             <input type="hidden" name="propertyName" value={property.name} />
-            <button className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+            <button className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-900 !text-white rounded-lg hover:bg-gray-800 transition-colors">
+              <BarChart3 size={13} />
               Connect
             </button>
           </form>

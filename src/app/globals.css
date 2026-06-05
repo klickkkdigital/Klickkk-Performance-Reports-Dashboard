@@ -1,12 +1,12 @@
-@import "tailwindcss";
+@import "@heroui/react/styles";
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
+  --background: #f8f8f8;
+  --foreground: #0b0b0b;
   --card: #ffffff;
-  --border: #e5e7eb;
-  --muted: #6b7280;
-  --brand: #6366f1;
+  --border: #dedede;
+  --muted: #6f7070;
+  --brand: #0b0b0b;
 }
 
 @theme inline {
@@ -23,4 +23,83 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+:root,
+.light,
+.default,
+[data-theme="light"],
+[data-theme="default"] {
+  --background: #f8f8f8;
+  --foreground: #0b0b0b;
+  --surface: #ffffff;
+  --surface-foreground: #0b0b0b;
+  --surface-secondary: #f8f8f8;
+  --surface-secondary-foreground: #0b0b0b;
+  --surface-tertiary: #eeeeee;
+  --surface-tertiary-foreground: #0b0b0b;
+  --overlay: #ffffff;
+  --overlay-foreground: #0b0b0b;
+  --muted: #6f7070;
+  --default: #f8f8f8;
+  --default-foreground: #0b0b0b;
+  --accent: #0b0b0b;
+  --accent-foreground: #ffffff;
+  --primary: #0b0b0b;
+  --primary-foreground: #ffffff;
+  --success: #babbbb;
+  --success-foreground: #0b0b0b;
+  --warning: #d8d8d8;
+  --warning-foreground: #0b0b0b;
+  --danger: #8a8a8a;
+  --danger-foreground: #ffffff;
+  --border: #dedede;
+  --separator: #e8e8e8;
+  --focus: #0b0b0b;
+  --field-background: #ffffff;
+  --field-foreground: #0b0b0b;
+  --field-placeholder: #737373;
+  --field-border: #dedede;
+  --accent-soft: color-mix(in srgb, #babbbb 34%, transparent);
+  --accent-soft-foreground: #0b0b0b;
+  --accent-soft-hover: color-mix(in srgb, #babbbb 45%, transparent);
+  --success-soft: color-mix(in srgb, #babbbb 28%, transparent);
+  --success-soft-foreground: #0b0b0b;
+  --warning-soft: color-mix(in srgb, #babbbb 22%, transparent);
+  --warning-soft-foreground: #0b0b0b;
+  --danger-soft: color-mix(in srgb, #0b0b0b 10%, transparent);
+  --danger-soft-foreground: #0b0b0b;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.button:not(.button--icon-only) {
+  --button-bg: #0b0b0b;
+  --button-bg-hover: #2a2a2a;
+  --button-bg-pressed: #2a2a2a;
+  --button-fg: #ffffff;
+  border-color: #0b0b0b;
+  color: #ffffff;
+}
+
+.button:not(.button--icon-only):hover,
+.button:not(.button--icon-only)[data-hovered="true"] {
+  color: #ffffff;
+}
+
+.tabs__tab[data-selected="true"] {
+  color: #ffffff;
+}
+
+.tabs__indicator {
+  background: #0b0b0b;
+}
+
+.dashboard-shell {
+  background:
+    linear-gradient(135deg, rgba(186, 187, 187, 0.28), rgba(248, 248, 248, 0) 28rem),
+    linear-gradient(180deg, #ffffff 0%, #f8f8f8 42%);
 }

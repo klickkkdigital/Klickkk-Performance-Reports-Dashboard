@@ -76,14 +76,14 @@ export default async function OverviewPage() {
           label="Total Revenue"
           value={`$${revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           icon={DollarSign}
-          iconBg="bg-emerald-50"
+          iconBg="bg-[#f8f8f8]"
           trend={pct(revenue, prevRevenue)}
         />
         <KpiCard
           label="Ad Spend"
           value={`$${spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           icon={TrendingUp}
-          iconBg="bg-rose-50"
+          iconBg="bg-[#f8f8f8]"
           trend={pct(spend, prevSpend)}
         />
         <KpiCard
@@ -91,14 +91,14 @@ export default async function OverviewPage() {
           value={`${roas.toFixed(2)}x`}
           subValue="Return on ad spend"
           icon={TrendingUp}
-          iconBg="bg-blue-50"
+          iconBg="bg-[#f8f8f8]"
           trend={pct(roas, prevRoas)}
         />
         <KpiCard
           label="Orders"
           value={orders.toLocaleString()}
           icon={ShoppingCart}
-          iconBg="bg-violet-50"
+          iconBg="bg-[#f8f8f8]"
           trend={pct(orders, shopifyPrev._sum.totalOrders ?? 0)}
         />
       </div>

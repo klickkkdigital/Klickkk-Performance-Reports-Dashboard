@@ -42,6 +42,72 @@ type InstalledShop = {
   name: string
   myshopifyDomain: string
   owner?: string
+  faviconUrl?: string
+}
+
+function getHtmlAttribute(tag: string, name: string) {
+  const match = tag.match(new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i'))
+  return match?.[1]
+}
+
+async function isReachableImage(url: string) {
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(5000),
+    })
+    const contentType = res.headers.get('content-type') ?? ''
+    return res.ok && (contentType.startsWith('image/') || contentType.includes('octet-stream'))
+  } catch {
+    return false
+  }
+}
+
+async function fetchStoreFavicon(shop: string, domain?: string) {
+  const origins = Array.from(new Set([domain, shop].filter(Boolean).map((host) => `https://${host}`)))
+
+  for (const origin of origins) {
+    const candidates: string[] = []
+
+    try {
+      const res = await fetch(origin, {
+        redirect: 'follow',
+        signal: AbortSignal.timeout(6000),
+      })
+      const html = res.ok ? await res.text() : ''
+      const iconTags = html.match(/<link\b[^>]*>/gi) ?? []
+
+      const scoredIcons = iconTags
+        .map((tag) => {
+          const rel = getHtmlAttribute(tag, 'rel')?.toLowerCase() ?? ''
+          const href = getHtmlAttribute(tag, 'href')
+          if (!href || !rel.includes('icon')) return null
+          const score = rel.includes('apple-touch-icon') ? 0 : rel.includes('shortcut') ? 2 : 1
+          return { href, score }
+        })
+        .filter((icon): icon is { href: string; score: number } => Boolean(icon))
+        .sort((a, b) => a.score - b.score)
+
+      for (const icon of scoredIcons) {
+        try {
+          candidates.push(new URL(icon.href, origin).toString())
+        } catch {
+          // Ignore malformed storefront icon URLs.
+        }
+      }
+    } catch {
+      // Some storefronts block homepage requests; fallback to the conventional favicon path.
+    }
+
+    candidates.push(new URL('/favicon.ico', origin).toString())
+
+    for (const candidate of Array.from(new Set(candidates))) {
+      if (await isReachableImage(candidate)) return candidate
+    }
+  }
+
+  return null
 }
 
 async function registerUninstallWebhook(shop: string, accessToken: string, requestUrl: string) {
@@ -75,11 +141,12 @@ async function fetchShopDetails(shop: string, accessToken: string): Promise<Inst
   })
 
   if (!res.ok) {
-    return { name: shop.replace('.myshopify.com', ''), myshopifyDomain: shop }
+    const faviconUrl = await fetchStoreFavicon(shop)
+    return { name: shop.replace('.myshopify.com', ''), myshopifyDomain: shop, faviconUrl: faviconUrl ?? undefined }
   }
 
   const data = (await res.json()) as ShopResponse
-  return {
+  const installedShop = {
     domain: data.shop?.domain,
     email: data.shop?.email,
     customerEmail: data.shop?.customer_email,
@@ -87,6 +154,8 @@ async function fetchShopDetails(shop: string, accessToken: string): Promise<Inst
     myshopifyDomain: data.shop?.myshopify_domain || shop,
     owner: data.shop?.shop_owner,
   }
+  const faviconUrl = await fetchStoreFavicon(shop, installedShop.domain)
+  return { ...installedShop, faviconUrl: faviconUrl ?? undefined }
 }
 
 function slugify(value: string) {
@@ -131,7 +200,8 @@ async function getOrCreateClientForShop(shop: string, details: InstalledShop) {
       slug: await getAvailableSlug(slugify(details.myshopifyDomain)),
       websiteUrl,
       industry: 'E-commerce',
-      primaryColor: '#16a34a',
+      logoUrl: details.faviconUrl,
+      primaryColor: '#0b0b0b',
       isActive: true,
     },
   })
@@ -208,6 +278,13 @@ export async function GET(req: NextRequest) {
       ? await db.client.findUniqueOrThrow({ where: { id: state.clientId } })
       : await getOrCreateClientForShop(shop, shopDetails)
     const user = await getOrCreateClientUser(client.id, shop, shopDetails)
+
+    if (shopDetails.faviconUrl && !client.logoUrl) {
+      await db.client.update({
+        where: { id: client.id },
+        data: { logoUrl: shopDetails.faviconUrl },
+      })
+    }
 
     await registerUninstallWebhook(shop, token.access_token, req.url)
     await saveShopifyConnectionRecord(

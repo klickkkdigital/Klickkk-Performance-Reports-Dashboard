@@ -3,7 +3,10 @@ import { db } from '@/lib/db'
 import SectionHeader from '@/components/ui/SectionHeader'
 import ConnectMetaButton from '@/components/connections/ConnectMetaButton'
 import ConnectGoogleButton from '@/components/connections/ConnectGoogleButton'
-import { CheckCircle, Clock } from 'lucide-react'
+import { Alert } from '@heroui/react/alert'
+import { Card } from '@heroui/react/card'
+import { Chip } from '@heroui/react/chip'
+import { BarChart3, CheckCircle, Clock, Megaphone, ShoppingBag } from 'lucide-react'
 
 export default async function SettingsPage({
   searchParams,
@@ -25,36 +28,36 @@ export default async function SettingsPage({
       <SectionHeader title="Settings" description="Account and preferences" />
 
       {params.success && (
-        <div className="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
-          Connection saved.
-        </div>
+        <Alert status="success" className="mb-4">
+          <Alert.Content><Alert.Title>Connection saved.</Alert.Title></Alert.Content>
+        </Alert>
       )}
 
       {params.error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          Connection failed: {params.error}
-        </div>
+        <Alert status="danger" className="mb-4">
+          <Alert.Content><Alert.Title>Connection failed: {params.error}</Alert.Title></Alert.Content>
+        </Alert>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-lg">
+      <Card className="max-w-lg border border-default-200/80 bg-content1/95 p-6 shadow-sm">
         <div className="space-y-4">
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Role</p>
-            <p className="text-sm text-gray-900 capitalize">{session.role.replace('_', ' ').toLowerCase()}</p>
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-default-500">Role</p>
+            <p className="text-sm capitalize text-foreground">{session.role.replace('_', ' ').toLowerCase()}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Account</p>
-            <p className="text-sm text-gray-900">{session.clientSlug ?? 'Admin'}</p>
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-default-500">Account</p>
+            <p className="text-sm text-foreground">{session.clientSlug ?? 'Admin'}</p>
           </div>
         </div>
-      </div>
+      </Card>
 
       {session.clientId && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-3xl mt-6">
+        <Card className="mt-6 max-w-3xl border border-default-200/80 bg-content1/95 p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Platform Connections</h2>
-              <p className="text-xs text-gray-400 mt-1">Connect reporting sources for this dashboard.</p>
+              <h2 className="text-sm font-semibold text-foreground">Platform Connections</h2>
+              <p className="mt-1 text-xs text-default-400">Connect reporting sources for this dashboard.</p>
             </div>
             <div className="flex items-center gap-2">
               {!connectedPlatforms.has('META') && <ConnectMetaButton clientId={session.clientId} />}
@@ -62,35 +65,41 @@ export default async function SettingsPage({
             </div>
           </div>
 
-          <div className="divide-y divide-gray-50 border border-gray-100 rounded-lg overflow-hidden">
+          <div className="overflow-hidden rounded-lg border border-default-100">
             {[
-              { platform: 'META', label: 'Meta Ads' },
-              { platform: 'GOOGLE_ANALYTICS', label: 'Google Analytics' },
-              { platform: 'SHOPIFY', label: 'Shopify' },
+              { platform: 'META', label: 'Meta Ads', icon: Megaphone },
+              { platform: 'GOOGLE_ANALYTICS', label: 'Google Analytics', icon: BarChart3 },
+              { platform: 'SHOPIFY', label: 'Shopify', icon: ShoppingBag },
             ].map((item) => {
               const connection = connections.find((conn) => conn.platform === item.platform)
+              const Icon = item.icon
               return (
-                <div key={item.platform} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                    <p className="text-xs text-gray-400">{connection?.accountName ?? 'Not connected'}</p>
+                <div key={item.platform} className="flex items-center justify-between border-b border-default-50 px-4 py-3 last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#f8f8f8] text-[#0b0b0b]">
+                      <Icon size={16} />
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{item.label}</p>
+                    <p className="text-xs text-default-400">{connection?.accountName ?? 'Not connected'}</p>
+                    </div>
                   </div>
                   {connection ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600">
+                    <Chip color="success" variant="soft" size="sm">
                       <CheckCircle size={14} />
                       Connected
-                    </span>
+                    </Chip>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                    <Chip color="default" variant="soft" size="sm">
                       <Clock size={14} />
                       Pending
-                    </span>
+                    </Chip>
                   )}
                 </div>
               )
             })}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   )

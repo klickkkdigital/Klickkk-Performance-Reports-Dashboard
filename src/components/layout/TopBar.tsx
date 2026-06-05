@@ -1,23 +1,40 @@
 import { SessionPayload } from '@/lib/session'
 import { logout } from '@/actions/auth'
-import { LogOut } from 'lucide-react'
+import { Avatar } from '@heroui/react/avatar'
+import { Button } from '@heroui/react/button'
+import { LogOut, PanelLeft } from 'lucide-react'
 
 type Client = { name: string } | null
 
 export default function TopBar({ session, client }: { session: SessionPayload; client: Client }) {
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-      <div className="text-sm text-gray-500">
-        {session.role === 'SUPER_ADMIN' ? 'Admin Portal' : `${client?.name ?? ''} Dashboard`}
+    <header className="flex h-16 items-center justify-between border-b border-default-200/80 bg-white/82 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="flex items-center gap-3">
+        <Button isIconOnly variant="ghost" size="sm" className="lg:hidden" aria-label="Open navigation">
+          <PanelLeft size={18} />
+        </Button>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+            {session.role === 'SUPER_ADMIN' ? 'Admin Portal' : 'Client Workspace'}
+          </p>
+          <p className="text-sm font-semibold text-foreground">
+            {session.role === 'SUPER_ADMIN' ? 'Klickkk Operations' : `${client?.name ?? ''} Dashboard`}
+          </p>
+        </div>
       </div>
       <form action={logout}>
-        <button
+        <Button
           type="submit"
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          variant="outline"
+          size="sm"
+          className="gap-2"
         >
-          <LogOut size={15} />
-          Sign out
-        </button>
+          <Avatar className="h-5 w-5 text-[10px]">
+            <Avatar.Fallback>{session.role === 'SUPER_ADMIN' ? 'A' : 'U'}</Avatar.Fallback>
+          </Avatar>
+          <span className="hidden sm:inline">Sign out</span>
+          <LogOut size={14} />
+        </Button>
       </form>
     </header>
   )

@@ -1,5 +1,6 @@
 'use client'
 import { removeConnection } from '@/actions/connections'
+import { Button } from '@heroui/react/button'
 import { Trash2 } from 'lucide-react'
 import { useTransition } from 'react'
 
@@ -12,13 +13,15 @@ export default function DisconnectButton({ connectionId }: { connectionId: strin
   }
 
   return (
-    <button
+    <Button
       onClick={handleDisconnect}
-      disabled={pending}
-      className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-      title="Disconnect"
+      isDisabled={pending}
+      isIconOnly
+      size="sm"
+      variant="danger-soft"
+      aria-label="Disconnect"
     >
       <Trash2 size={14} />
-    </button>
+    </Button>
   )
 }

@@ -1,4 +1,5 @@
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Card } from '@heroui/react/card'
 
 type Props = {
   label: string
@@ -9,27 +10,27 @@ type Props = {
   iconBg?: string
 }
 
-export default function KpiCard({ label, value, subValue, icon: Icon, trend, iconBg = 'bg-indigo-50' }: Props) {
+export default function KpiCard({ label, value, subValue, icon: Icon, trend, iconBg = 'bg-[#f8f8f8]' }: Props) {
   const trendPositive = trend !== undefined && trend > 0
   const trendNegative = trend !== undefined && trend < 0
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-sm text-gray-500 font-medium">{label}</p>
+    <Card className="border border-default-200/80 bg-content1/95 p-5 shadow-sm">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-default-500">{label}</p>
         {Icon && (
-          <div className={`w-9 h-9 ${iconBg} rounded-lg flex items-center justify-center`}>
-            <Icon size={16} className="text-gray-700" />
+          <div className={`flex h-9 w-9 items-center justify-center rounded-md ${iconBg}`}>
+            <Icon size={17} className="text-default-700" />
           </div>
         )}
       </div>
-      <p className="text-2xl font-semibold text-gray-900 tracking-tight">{value}</p>
-      <div className="flex items-center gap-2 mt-1.5">
-        {subValue && <p className="text-xs text-gray-400">{subValue}</p>}
+      <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+      <div className="mt-2 flex items-center gap-2">
+        {subValue && <p className="text-xs text-default-400">{subValue}</p>}
         {trend !== undefined && (
           <span
-            className={`flex items-center gap-0.5 text-xs font-medium ${
-              trendPositive ? 'text-emerald-600' : trendNegative ? 'text-red-500' : 'text-gray-400'
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+              trendPositive ? 'bg-[#f8f8f8] text-[#0b0b0b]' : trendNegative ? 'bg-[#e6e6e6] text-[#0b0b0b]' : 'bg-default-100 text-default-500'
             }`}
           >
             {trendPositive ? <TrendingUp size={11} /> : trendNegative ? <TrendingDown size={11} /> : <Minus size={11} />}
@@ -37,6 +38,6 @@ export default function KpiCard({ label, value, subValue, icon: Icon, trend, ico
           </span>
         )}
       </div>
-    </div>
+    </Card>
   )
 }

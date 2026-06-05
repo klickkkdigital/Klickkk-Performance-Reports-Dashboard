@@ -1,20 +1,24 @@
 'use client'
 import { useActionState } from 'react'
 import { login, LoginState } from '@/actions/auth'
+import { Alert } from '@heroui/react/alert'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { Input } from '@heroui/react/input'
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState<LoginState, FormData>(login, null)
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="dashboard-shell flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <Card className="border border-default-200/80 bg-content1/95 p-8 shadow-sm">
           <div className="mb-8 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-4">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#0b0b0b] shadow-sm">
               <span className="text-white font-bold text-lg">K</span>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900">Sign in</h1>
-            <p className="text-sm text-gray-500 mt-1">Access your reporting dashboard</p>
+            <h1 className="text-2xl font-semibold text-foreground">Sign in</h1>
+            <p className="mt-1 text-sm text-default-500">Access your reporting dashboard</p>
           </div>
 
           <form action={formAction} className="space-y-4">
@@ -22,13 +26,14 @@ export default function LoginPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                fullWidth
+                variant="primary"
                 placeholder="you@company.com"
               />
             </div>
@@ -37,31 +42,35 @@ export default function LoginPage() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
-              <input
+              <Input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                fullWidth
+                variant="primary"
                 placeholder="••••••••"
               />
             </div>
 
             {state?.error && (
-              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{state.error}</p>
+              <Alert status="danger">
+                <Alert.Content><Alert.Title>{state.error}</Alert.Title></Alert.Content>
+              </Alert>
             )}
 
-            <button
+            <Button
               type="submit"
-              disabled={isPending}
-              className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              isDisabled={isPending}
+              fullWidth
+              variant="primary"
             >
               {isPending ? 'Signing in…' : 'Sign in'}
-            </button>
+            </Button>
           </form>
-        </div>
-        <p className="text-center text-xs text-gray-400 mt-4">Klickkk : Performance Reports</p>
+        </Card>
+        <p className="mt-4 text-center text-xs text-default-400">Klickkk : Performance Reports</p>
       </div>
     </div>
   )

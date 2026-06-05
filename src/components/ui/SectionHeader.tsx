@@ -6,10 +6,10 @@ type Props = {
 
 export default function SectionHeader({ title, description, action }: Props) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-        {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+        {description && <p className="mt-1 text-sm text-default-500">{description}</p>}
       </div>
       {action}
     </div>
